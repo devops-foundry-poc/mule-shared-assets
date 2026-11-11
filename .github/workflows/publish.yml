@@ -1,0 +1,27 @@
+# Publishes the parent POM to Anypoint Exchange on every merge to main.
+# Calls the org-level reusable workflow from mule-cicd-workflows.
+# Environment "shared-assets" gates this run and holds SHARED_ASSETS_CLIENT_ID/_SECRET.
+name: Publish to Exchange
+
+on:
+  push:
+    branches: [main]
+
+# Least-privilege: this workflow only reads repo contents and calls a reusable workflow.
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish parent POM to Exchange
+    environment: shared-assets
+    uses: devops-foundry-poc/mule-cicd-workflows/.github/workflows/exchange-publish.yml@main
+    with:
+      # Root Anypoint BG ID — must match pom.xml <groupId>.
+      bg_id: '427b3435-71d5-43d2-95a8-5c2a683d97a8'
+      # Whether to upload the built JAR as a GitHub Actions artifact for downstream deploy jobs.
+      # For a pure POM artifact there is no application JAR; set false.
+      upload_artifact: false
+    secrets:
+      connected_app_client_id: ${{ secrets.SHARED_ASSETS_CLIENT_ID }}
+      connected_app_client_secret: ${{ secrets.SHARED_ASSETS_CLIENT_SECRET }}

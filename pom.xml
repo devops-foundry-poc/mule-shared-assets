@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    groupId = Anypoint root Business Group ID (Exchange Maven facade standard).
+    TO CONFIRM: reconcile with com.dummyName.mule if a reverse-DNS build coordinate
+    is preferred. Under Exchange, the facade URL is
+      https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven
+    so this value must remain the org/BG UUID for Exchange publish/resolve to work.
+  -->
+  <groupId>427b3435-71d5-43d2-95a8-5c2a683d97a8</groupId>
+  <artifactId>mule-shared-assets-pom</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>MuleSoft Shared Assets — Parent POM</name>
+  <description>
+    Organisation-wide parent POM. Centralises connector versions (N-1 policy),
+    MUnit coverage gate (80 %), CloudHub 2.0 and Exchange deploy profiles.
+    All application POMs declare this as their &lt;parent&gt;.
+  </description>
+
+  <properties>
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <!-- Mule runtime  TO CONFIRM exact patch from MuleSoft release notes -->
+    <app.runtime>4.9.0</app.runtime>
+
+    <!--
+      ─────────────────────────────────────────────────────────────────────
+      CONNECTOR VERSIONS  (N-1 policy: latest-stable minus one release)
+      Resolve live from Anypoint Exchange before pinning:
+        Community  https://repository.mulesoft.org/releases/
+        Premium    https://docs.mulesoft.com  (release notes) or Exchange listing
+      "TO CONFIRM" markers = version NOT yet verified from a live source.
+      ─────────────────────────────────────────────────────────────────────
+    -->
+
+    <!-- Community — org.mule.connectors -->
+    <mule-http-connector.version>1.11.3</mule-http-connector.version>          <!-- TO CONFIRM N-1 -->
+    <mule-objectstore-connector.version>1.1.1</mule-objectstore-connector.version> <!-- TO CONFIRM N-1 -->
+
+    <!-- Premium — com.mulesoft.connectors (verify from MuleSoft release notes) -->
+    <mule-kafka-connector.version>4.8.1</mule-kafka-connector.version>          <!-- TO CONFIRM N-1 -->
+    <mule-salesforce-connector.version>10.20.0</mule-salesforce-connector.version> <!-- TO CONFIRM N-1 -->
+    <mule-amazon-dynamodb-connector.version>2.1.0</mule-amazon-dynamodb-connector.version> <!-- TO CONFIRM N-1 -->
+
+    <!-- Functional modules -->
+    <mule-apikit-module.version>1.11.10</mule-apikit-module.version>              <!-- TO CONFIRM N-1 -->
+    <mule-validation-module.version>2.0.8</mule-validation-module.version>        <!-- TO CONFIRM N-1 -->
+    <mule-secure-configuration-property-module.version>1.2.7</mule-secure-configuration-property-module.version> <!-- TO CONFIRM N-1 -->
+
+    <!--
+      BUILD PLUGINS — advisory only; do NOT auto-bump.
+      mule-maven-plugin 4.10.0 is intentional (ERR-016 regression fix).
+    -->
+    <mule-maven-plugin.version>4.10.0</mule-maven-plugin.version>
+    <munit.version>3.7.1</munit.version>
+    <exchange-mule-maven-plugin.version>0.1.7</exchange-mule-maven-plugin.version>
+
+    <!-- CH2 deploy defaults — overridden per deployment via -D flags -->
+    <app.replicas>1</app.replicas>
+    <app.vcores>0.1</app.vcores>
+  </properties>
+
+  <!-- ── Connector version governance (all app POMs inherit these) ── -->
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>org.mule.connectors</groupId>
+        <artifactId>mule-http-connector</artifactId>
+        <version>${mule-http-connector.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mule.connectors</groupId>
+        <artifactId>mule-objectstore-connector</artifactId>
+        <version>${mule-objectstore-connector.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule-kafka-connector</artifactId>
+        <version>${mule-kafka-connector.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule-salesforce-connector</artifactId>
+        <version>${mule-salesforce-connector.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule-amazon-dynamodb-connector</artifactId>
+        <version>${mule-amazon-dynamodb-connector.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mule.modules</groupId>
+        <artifactId>mule-apikit-module</artifactId>
+        <version>${mule-apikit-module.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mule.modules</groupId>
+        <artifactId>mule-validation-module</artifactId>
+        <version>${mule-validation-module.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>com.mulesoft.modules</groupId>
+        <artifactId>mule-secure-configuration-property-module</artifactId>
+        <version>${mule-secure-configuration-property-module.version}</version>
+        <classifier>mule-plugin</classifier>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <!-- ── Plugin governance (app POMs activate mule-maven-plugin + MUnit) ── -->
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <groupId>org.mule.tools.maven</groupId>
+          <artifactId>mule-maven-plugin</artifactId>
+          <version>${mule-maven-plugin.version}</version>
+          <extensions>true</extensions>
+        </plugin>
+
+        <!--
+          MUnit runner with the 80 % coverage gate.
+          Apps inherit this via pluginManagement and declare the plugin in
+          their own <build><plugins> with <extensions>true</extensions>.
+        -->
+        <plugin>
+          <groupId>com.mulesoft.munit.tools</groupId>
+          <artifactId>munit-maven-plugin</artifactId>
+          <version>${munit.version}</version>
+          <executions>
+            <execution>
+              <id>test</id>
+              <phase>test</phase>
+              <goals><goal>test</goal></goals>
+            </execution>
+            <execution>
+              <id>coverage-report</id>
+              <phase>test</phase>
+              <goals><goal>coverage-report</goal></goals>
+            </execution>
+          </executions>
+          <configuration>
+            <coverage>
+              <runCoverage>true</runCoverage>
+              <failBuild>true</failBuild>
+              <requiredApplicationCoverage>80</requiredApplicationCoverage>
+              <requiredResourceCoverage>80</requiredResourceCoverage>
+              <requiredFlowCoverage>80</requiredFlowCoverage>
+            </coverage>
+          </configuration>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <!-- ── Artifact store: Anypoint Exchange (single repository; no snapshot repo) ── -->
+  <distributionManagement>
+    <repository>
+      <id>anypoint-exchange-v3</id>
+      <name>Anypoint Exchange V3</name>
+      <!--
+        URL uses ${project.groupId} which must equal the Anypoint org/BG UUID.
+        See groupId note at the top of this file.
+      -->
+      <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+    </repository>
+  </distributionManagement>
+
+  <!-- ── Repository resolution ── -->
+  <repositories>
+    <repository>
+      <id>mulesoft-releases</id>
+      <name>MuleSoft Releases</name>
+      <url>https://repository.mulesoft.org/releases/</url>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+    <repository>
+      <id>mulesoft-ee-releases</id>
+      <name>MuleSoft EE Releases</name>
+      <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+      <snapshots><enabled>false</enabled></snapshots>
+      <!--
+        Credentials: obtain via Salesforce service request (MuleSoft Enterprise repository).
+        Add a <server id="mulesoft-ee-releases"> block to the CI settings.xml with those creds.
+      -->
+    </repository>
+    <repository>
+      <id>anypoint-exchange-v3</id>
+      <name>Anypoint Exchange V3 Maven Facade</name>
+      <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>mulesoft-releases</id>
+      <name>MuleSoft Releases</name>
+      <url>https://repository.mulesoft.org/releases/</url>
+      <snapshots><enabled>false</enabled></snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>mulesoft-ee-releases</id>
+      <name>MuleSoft EE Releases</name>
+      <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+      <snapshots><enabled>false</enabled></snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <!-- ── Profiles ── -->
+  <profiles>
+
+    <!--
+      CH2 deploy — activated with -P ch2.
+      All -D overrides are injected by the ch2-deploy.yml reusable workflow.
+      No secret values are present here; they arrive via connected.app.client.* and env.client.*
+      which are passed as -D properties from the pipeline, never stored in this file.
+    -->
+    <profile>
+      <id>ch2</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>mule-maven-plugin</artifactId>
+            <version>${mule-maven-plugin.version}</version>
+            <extensions>true</extensions>
+            <configuration>
+              <cloudhub2Deployment>
+                <uri>https://anypoint.mulesoft.com</uri>
+                <provider>MC</provider>
+                <environment>${ch2.environment}</environment>
+                <businessGroupId>${bg.id}</businessGroupId>
+                <applicationName>${deployment.name}</applicationName>
+                <replicas>${app.replicas}</replicas>
+                <vCores>${app.vcores}</vCores>
+                <muleVersion>${app.runtime}</muleVersion>
+                <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
+                <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
+                <connectedAppGrantType>client_credentials</connectedAppGrantType>
+                <secureProperties>
+                  <anypoint.platform.client_id>${env.client.id}</anypoint.platform.client_id>
+                  <anypoint.platform.client_secret>${env.client.secret}</anypoint.platform.client_secret>
+                  <mule.vault.key>${secure.key}</mule.vault.key>
+                </secureProperties>
+              </cloudhub2Deployment>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+      Exchange publish — activated with -P deploy-to-exchange-v3.
+      Used both for publishing this parent POM and for publishing application JARs.
+    -->
+    <profile>
+      <id>deploy-to-exchange-v3</id>
+      <activation><activeByDefault>false</activeByDefault></activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>exchange-mule-maven-plugin</artifactId>
+            <version>${exchange-mule-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>validate</id>
+                <goals><goal>exchange-pre-deploy</goal></goals>
+              </execution>
+              <execution>
+                <id>deploy</id>
+                <phase>deploy</phase>
+                <goals><goal>exchange-deploy</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
+</project>
