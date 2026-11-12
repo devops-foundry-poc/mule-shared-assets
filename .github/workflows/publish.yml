@@ -15,8 +15,8 @@ jobs:
     name: Publish parent POM to Exchange
     uses: devops-foundry-poc/mule-cicd-workflows/.github/workflows/exchange-publish.yml@main
     with:
-      # For a pure POM artifact there is no application JAR; set false.
-      # bg_id is derived automatically from pom.xml <groupId> inside the reusable workflow.
+      # Plain POM: skip exchange-mule-maven-plugin (HTTP 412 for non-Mule-app artifacts).
+      is_mule_app: false
       upload_artifact: false
     secrets:
       connected_app_client_id: ${{ secrets.SHARED_ASSETS_CLIENT_ID }}
