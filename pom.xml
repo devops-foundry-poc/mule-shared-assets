@@ -311,11 +311,13 @@
                 <id>validate</id>
                 <goals><goal>exchange-pre-deploy</goal></goals>
               </execution>
-              <execution>
-                <id>deploy</id>
-                <phase>deploy</phase>
-                <goals><goal>exchange-deploy</goal></goals>
-              </execution>
+              <!--
+                exchange-deploy is intentionally NOT declared here.
+                Maven's default lifecycle binding already binds it to the deploy phase
+                (execution id: default-exchange-deploy). Adding an explicit execution
+                causes the goal to run TWICE — the second run tries to re-publish the
+                already-published asset and Exchange returns 500 on the duplicate EOF.
+              -->
             </executions>
           </plugin>
         </plugins>
