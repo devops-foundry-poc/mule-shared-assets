@@ -258,6 +258,13 @@
                 <uri>https://anypoint.mulesoft.com</uri>
                 <provider>MC</provider>
                 <environment>${ch2.environment}</environment>
+                <!--
+                  target = CH2 Fabric/Space name shown in Runtime Manager → CloudHub 2.0.
+                  Examples: "Cloudhub US East 1", "Cloudhub EU West 1", or a private space name.
+                  TO CONFIRM: check Anypoint → Runtime Manager → CloudHub 2.0 → Target column.
+                  Passed via -Dapp.target from the ch2-deploy.yml workflow.
+                -->
+                <target>${app.target}</target>
                 <businessGroupId>${bg.id}</businessGroupId>
                 <applicationName>${deployment.name}</applicationName>
                 <replicas>${app.replicas}</replicas>
