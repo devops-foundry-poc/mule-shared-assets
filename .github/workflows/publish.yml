@@ -1,23 +1,55 @@
-# Publishes the parent POM to Anypoint Exchange on every merge to main.
-# Calls the org-level reusable workflow from mule-cicd-workflows.
-name: Publish to Exchange
+# Publishes the parent POM to GitHub Packages on every merge to main.
+#
+# Why GitHub Packages and not Anypoint Exchange:
+# Exchange Maven facade v3 requires the exchange-mule-maven-plugin to pre-register
+# asset metadata before accepting any PUT. That plugin only recognises Mule runtime
+# asset types (mule-application, mule-domain, mule-policy) and rejects packaging=pom
+# with HTTP 412. GitHub Packages is a standard Maven repository that accepts plain POMs.
+#
+# Child Mule apps activate the deploy-to-exchange-v3 profile in their own builds to
+# publish application JARs to Exchange; they resolve the parent POM from GitHub Packages.
+name: Publish parent POM
 
 on:
   push:
     branches: [main]
 
-# Least-privilege: this workflow only reads repo contents and calls a reusable workflow.
 permissions:
   contents: read
+  packages: write   # required to publish to GitHub Packages
 
 jobs:
   publish:
-    name: Publish parent POM to Exchange
-    uses: devops-foundry-poc/mule-cicd-workflows/.github/workflows/exchange-publish.yml@main
-    with:
-      # Plain POM: skip exchange-mule-maven-plugin (HTTP 412 for non-Mule-app artifacts).
-      is_mule_app: false
-      upload_artifact: false
-    secrets:
-      connected_app_client_id: ${{ secrets.SHARED_ASSETS_CLIENT_ID }}
-      connected_app_client_secret: ${{ secrets.SHARED_ASSETS_CLIENT_SECRET }}
+    name: Strip SNAPSHOT → publish to GitHub Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Java 17 with GitHub Packages server
+        # TODO: pin to SHA — gh release view v4 -R actions/setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          # setup-java writes a settings.xml server entry for the id below.
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Strip -SNAPSHOT and deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(mvn help:evaluate \
+            -Dexpression=project.version -q -DforceStdout \
+            --no-transfer-progress --batch-mode)
+          RELEASE="${VERSION%-SNAPSHOT}"
+          echo "Publishing version: ${RELEASE}"
+          mvn versions:set \
+            -DnewVersion="${RELEASE}" \
+            -DgenerateBackupFiles=false \
+            --no-transfer-progress --batch-mode
+          mvn deploy \
+            --no-transfer-progress --batch-mode

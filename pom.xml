@@ -180,16 +180,16 @@
     </pluginManagement>
   </build>
 
-  <!-- ── Artifact store: Anypoint Exchange (single repository; no snapshot repo) ── -->
+  <!--
+    Parent POM publishes to GitHub Packages (plain POM — Exchange Maven facade v3
+    rejects packaging=pom artifacts; it only accepts Mule runtime asset types).
+    Child Mule apps override this via the deploy-to-exchange-v3 profile below.
+  -->
   <distributionManagement>
     <repository>
-      <id>anypoint-exchange-v3</id>
-      <name>Anypoint Exchange V3</name>
-      <!--
-        URL uses ${project.groupId} which must equal the Anypoint org/BG UUID.
-        See groupId note at the top of this file.
-      -->
-      <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+      <id>github</id>
+      <name>GitHub Packages — devops-foundry-poc/mule-shared-assets</name>
+      <url>https://maven.pkg.github.com/devops-foundry-poc/mule-shared-assets</url>
     </repository>
   </distributionManagement>
 
@@ -279,12 +279,20 @@
     </profile>
 
     <!--
-      Exchange publish — activated with -P deploy-to-exchange-v3.
-      Used both for publishing this parent POM and for publishing application JARs.
+      Exchange publish — activated with -P deploy-to-exchange-v3 by child Mule apps.
+      Overrides distributionManagement to Exchange and runs the exchange-mule-maven-plugin.
+      The parent POM itself does NOT activate this profile (it publishes to GitHub Packages).
     -->
     <profile>
       <id>deploy-to-exchange-v3</id>
       <activation><activeByDefault>false</activeByDefault></activation>
+      <distributionManagement>
+        <repository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange V3</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+        </repository>
+      </distributionManagement>
       <build>
         <plugins>
           <plugin>
