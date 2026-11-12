@@ -62,7 +62,7 @@
     -->
     <mule-maven-plugin.version>4.10.0</mule-maven-plugin.version>
     <munit.version>3.7.1</munit.version>
-    <exchange-mule-maven-plugin.version>0.1.7</exchange-mule-maven-plugin.version>
+    <exchange-mule-maven-plugin.version>0.1.8</exchange-mule-maven-plugin.version>
 
     <!-- CH2 deploy defaults — overridden per deployment via -D flags -->
     <app.replicas>1</app.replicas>
