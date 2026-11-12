@@ -17,10 +17,8 @@ jobs:
     environment: shared-assets
     uses: devops-foundry-poc/mule-cicd-workflows/.github/workflows/exchange-publish.yml@main
     with:
-      # Root Anypoint BG ID — must match pom.xml <groupId>.
-      bg_id: '427b3435-71d5-43d2-95a8-5c2a683d97a8'
-      # Whether to upload the built JAR as a GitHub Actions artifact for downstream deploy jobs.
       # For a pure POM artifact there is no application JAR; set false.
+      # bg_id is derived automatically from pom.xml <groupId> inside the reusable workflow.
       upload_artifact: false
     secrets:
       connected_app_client_id: ${{ secrets.SHARED_ASSETS_CLIENT_ID }}
