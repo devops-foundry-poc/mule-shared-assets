@@ -14,7 +14,7 @@
   -->
   <groupId>427b3435-71d5-43d2-95a8-5c2a683d97a8</groupId>
   <artifactId>mule-shared-assets-pom</artifactId>
-  <version>1.0.4-SNAPSHOT</version>
+  <version>1.0.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>MuleSoft Shared Assets — Parent POM</name>
   <description>
