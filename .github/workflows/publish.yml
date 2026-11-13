@@ -26,30 +26,44 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
-      - name: Set up Java 17 with GitHub Packages server
+      - name: Set up Java 17
         # TODO: pin to SHA — gh release view v4 -R actions/setup-java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
-          # setup-java writes a settings.xml server entry for the id below.
+          # setup-java writes a settings.xml <server id="github"> entry used for GitHub Packages auth.
           server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
+
+      - name: Install Maven 3.8.8 (mule-maven-plugin 4.x incompatible with 3.9.x)
+        run: |
+          MVN_VERSION="3.8.8"
+          MVN_HOME="${HOME}/.local/apache-maven-${MVN_VERSION}"
+          if [ ! -d "${MVN_HOME}" ]; then
+            curl -qL \
+              "https://archive.apache.org/dist/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz" \
+              -o /tmp/maven.tar.gz
+            mkdir -p "${HOME}/.local"
+            tar -xzf /tmp/maven.tar.gz -C "${HOME}/.local/"
+            rm /tmp/maven.tar.gz
+          fi
+          echo "MVN=${MVN_HOME}/bin/mvn" >> "$GITHUB_ENV"
 
       - name: Strip -SNAPSHOT and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(mvn help:evaluate \
+          VERSION=$($MVN help:evaluate \
             -Dexpression=project.version -q -DforceStdout \
             --no-transfer-progress --batch-mode)
           RELEASE="${VERSION%-SNAPSHOT}"
           echo "Publishing version: ${RELEASE}"
-          mvn versions:set \
+          $MVN versions:set \
             -DnewVersion="${RELEASE}" \
             -DgenerateBackupFiles=false \
             --no-transfer-progress --batch-mode
-          mvn deploy \
+          $MVN deploy \
             --no-transfer-progress --batch-mode
