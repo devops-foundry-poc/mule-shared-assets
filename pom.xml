@@ -14,7 +14,7 @@
   -->
   <groupId>427b3435-71d5-43d2-95a8-5c2a683d97a8</groupId>
   <artifactId>mule-shared-assets-pom</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>1.0.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>MuleSoft Shared Assets — Parent POM</name>
   <description>
@@ -297,7 +297,12 @@
         <repository>
           <id>anypoint-exchange-v3</id>
           <name>Anypoint Exchange V3</name>
-          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+          <!--
+            Uses ${exchangeGroupId} so callers can override the publish target BG
+            per region via -DexchangeGroupId=<bg-uuid> without changing the POM.
+            Defaults to ${project.groupId} (set in app POM <properties>).
+          -->
+          <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${exchangeGroupId}/maven</url>
         </repository>
       </distributionManagement>
       <build>
